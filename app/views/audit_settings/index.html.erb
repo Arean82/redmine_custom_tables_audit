@@ -1,6 +1,6 @@
 <h2>Custom Tables Audit Configuration</h2>
 
-<%= form_tag({ action: 'update' }, method: :post) do %>
+<%= form_tag({ controller: 'audit_settings', action: 'update' }, method: :post) do %>
   <div class="box tabular settings">
     <p>
       <label for="enable_audit_logging">Enable Audit Logging:</label>
