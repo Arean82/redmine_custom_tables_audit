@@ -2,6 +2,9 @@ en:
   custom_tables_audit:
     log_prefix: "Custom Table Change:"
     settings_updated: "Custom Tables Audit settings saved successfully!"
+    enable_audit_logging: "Enable Audit Logging"
+    enable_created_by: "Add Created By column"
+    enable_created_at: "Add Created At column"
 
   audit_settings:
     title: "Custom Tables Audit Configuration"

@@ -10,7 +10,7 @@ Redmine::Plugin.register :redmine_custom_tables_audit do
     'enable_created_by' => '1',
     'enable_created_at' => '1'
   },
-  partial: 'audit_settings/index'
+  partial: 'audit_settings/index'  # This should point to your view file
 end
 
 # Safe loading with proper error handling
