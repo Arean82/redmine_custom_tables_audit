@@ -13,20 +13,27 @@ Redmine::Plugin.register :redmine_custom_tables_audit do
   partial: 'audit_settings/index'
 end
 
-# Patch the CustomEntity model
+# Patch the controller and model
 Rails.configuration.to_prepare do
   begin
-    if Object.const_defined?('CustomEntity')
-      require_dependency File.expand_path('../lib/redmine_custom_tables_audit/custom_entity_patch', __FILE__)
-      
-      unless CustomEntity.included_modules.include?(RedmineCustomTablesAudit::CustomEntityPatch)
-        CustomEntity.include(RedmineCustomTablesAudit::CustomEntityPatch)
-      end
-      
-      Rails.logger.info "Custom Tables Audit: ✓ Successfully patched CustomEntity"
+    # Patch CustomEntitiesController for logging
+    if Object.const_defined?('CustomEntitiesController')
+      require_dependency File.expand_path('../lib/redmine_custom_tables_audit/custom_entities_controller_patch', __FILE__)
+      CustomEntitiesController.prepend(RedmineCustomTablesAudit::CustomEntitiesControllerPatch)
+      Rails.logger.info "Custom Tables Audit: ✓ Successfully patched CustomEntitiesController"
     else
-      Rails.logger.warn "Custom Tables Audit: CustomEntity not found - make sure custom_tables plugin is installed"
+      Rails.logger.warn "Custom Tables Audit: CustomEntitiesController not found"
     end
+
+    # Patch CustomEntity for audit columns
+    if Object.const_defined?('CustomEntity')
+      require_dependency File.expand_path('../lib/redmine_custom_tables_audit/custom_entity_callbacks', __FILE__)
+      CustomEntity.include(RedmineCustomTablesAudit::CustomEntityCallbacks)
+      Rails.logger.info "Custom Tables Audit: ✓ Successfully added callbacks to CustomEntity"
+    else
+      Rails.logger.warn "Custom Tables Audit: CustomEntity not found"
+    end
+    
   rescue => e
     Rails.logger.error "Custom Tables Audit: Error - #{e.message}"
     Rails.logger.error e.backtrace.join("\n")
