@@ -13,26 +13,22 @@ Redmine::Plugin.register :redmine_custom_tables_audit do
   partial: 'audit_settings/index'
 end
 
-# Simple direct approach
+# Patch the CustomEntity model
 Rails.configuration.to_prepare do
   begin
-    # Load our classes
-    require_dependency File.expand_path('../lib/redmine_custom_tables_audit/simple_audit', __FILE__)
-    require_dependency File.expand_path('../lib/redmine_custom_tables_audit/column_manager', __FILE__)
-    require_dependency File.expand_path('../lib/redmine_custom_tables_audit/model_callbacks', __FILE__)
-    
-    # Try to patch CustomEntity model
     if Object.const_defined?('CustomEntity')
-      CustomEntity.include(RedmineCustomTablesAudit::ModelCallbacks)
-      Rails.logger.info "Custom Tables Audit: ✓ Successfully added callbacks to CustomEntity"
+      require_dependency 'custom_entity'
       
-      # Ensure columns exist
-      RedmineCustomTablesAudit::ColumnManager.add_columns_to_existing_tables
+      unless CustomEntity.included_modules.include?(CustomEntity::CustomTablesAuditPatch)
+        CustomEntity.prepend(CustomEntity::CustomTablesAuditPatch)
+      end
+      
+      Rails.logger.info "Custom Tables Audit: ✓ Successfully patched CustomEntity"
     else
-      Rails.logger.warn "Custom Tables Audit: CustomEntity not found"
+      Rails.logger.warn "Custom Tables Audit: CustomEntity not found - make sure custom_tables plugin is installed"
     end
-    
   rescue => e
     Rails.logger.error "Custom Tables Audit: Error - #{e.message}"
+    Rails.logger.error e.backtrace.join("\n")
   end
 end
