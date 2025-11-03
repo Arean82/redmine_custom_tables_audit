@@ -11,31 +11,35 @@ Redmine::Plugin.register :redmine_custom_tables_audit do
     'enable_created_at' => '1'
   },
   partial: 'audit_settings/index'
+  
+  # API permissions
+  permission :custom_tables_audit_api, { 
+    'redmine_custom_tables_audit/api' => [:log_change, :get_settings, :test_connection] 
+  }, require: :loggedin
 end
 
-# Patch the controller and model
+# Load components
 Rails.configuration.to_prepare do
   begin
-    # Patch CustomEntitiesController for logging
-    if Object.const_defined?('CustomEntitiesController')
-      require_dependency File.expand_path('../lib/redmine_custom_tables_audit/custom_entities_controller_patch', __FILE__)
-      CustomEntitiesController.prepend(RedmineCustomTablesAudit::CustomEntitiesControllerPatch)
-      Rails.logger.info "Custom Tables Audit: ✓ Successfully patched CustomEntitiesController"
-    else
-      Rails.logger.warn "Custom Tables Audit: CustomEntitiesController not found"
-    end
-
-    # Patch CustomEntity for audit columns
+    # Load core observer
+    require_dependency File.expand_path('../lib/redmine_custom_tables_audit/core_observer', __FILE__)
+    
+    # Load model mixin
+    require_dependency File.expand_path('../lib/redmine_custom_tables_audit/model_mixin', __FILE__)
+    
+    # Load API controller
+    require_dependency File.expand_path('../app/controllers/redmine_custom_tables_audit/api_controller', __FILE__)
+    
+    # Apply mixin to CustomEntity
     if Object.const_defined?('CustomEntity')
-      require_dependency File.expand_path('../lib/redmine_custom_tables_audit/custom_entity_callbacks', __FILE__)
-      CustomEntity.include(RedmineCustomTablesAudit::CustomEntityCallbacks)
-      Rails.logger.info "Custom Tables Audit: ✓ Successfully added callbacks to CustomEntity"
-    else
-      Rails.logger.warn "Custom Tables Audit: CustomEntity not found"
+      CustomEntity.include(RedmineCustomTablesAudit::ModelMixin)
+      Rails.logger.info "Custom Tables Audit: ✓ CustomEntity patched successfully"
     end
     
+    Rails.logger.info "Custom Tables Audit: ✓ Plugin loaded successfully"
+    
   rescue => e
-    Rails.logger.error "Custom Tables Audit: Error - #{e.message}"
-    Rails.logger.error e.backtrace.join("\n")
+    Rails.logger.error "Custom Tables Audit: ✗ Loading error: #{e.message}"
+    Rails.logger.error e.backtrace.first(5).join("\n")
   end
 end
