@@ -1,5 +1,7 @@
 module CustomTablesAudit
   class Hooks < Redmine::Hook::ViewListener
-    # You can add hooks here if you want to show custom content in issue views.
+    def controller_issues_edit_after_save(context = {})
+      # This hook can be used for issue-related changes
+    end
   end
 end

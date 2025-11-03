@@ -8,9 +8,26 @@
           @settings['enable_audit_logging'] == '1' %>
     </p>
 
+    <fieldset>
+      <legend>Audit Columns</legend>
+      <p>
+        <label for="enable_created_by">Add Created By column:</label>
+        <%= check_box_tag 'settings[enable_created_by]', '1',
+            @settings['enable_created_by'] == '1' %>
+        <em class="info">Adds 'created_by' column to track who created the record</em>
+      </p>
+
+      <p>
+        <label for="enable_created_at">Add Created At column:</label>
+        <%= check_box_tag 'settings[enable_created_at]', '1',
+            @settings['enable_created_at'] == '1' %>
+        <em class="info">Adds 'created_at' column to track when record was created</em>
+      </p>
+    </fieldset>
+
     <p>
       <label>Future Options (Coming Soon):</label>
-      <em>Here you’ll be able to configure which custom tables and fields to audit.</em>
+      <em>Here you'll be able to configure which custom tables and fields to audit.</em>
     </p>
   </div>
 
