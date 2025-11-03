@@ -17,10 +17,10 @@ end
 Rails.configuration.to_prepare do
   begin
     if Object.const_defined?('CustomEntity')
-      require_dependency 'custom_entity'
+      require_dependency File.expand_path('../lib/redmine_custom_tables_audit/custom_entity_patch', __FILE__)
       
-      unless CustomEntity.included_modules.include?(CustomEntity::CustomTablesAuditPatch)
-        CustomEntity.prepend(CustomEntity::CustomTablesAuditPatch)
+      unless CustomEntity.included_modules.include?(RedmineCustomTablesAudit::CustomEntityPatch)
+        CustomEntity.include(RedmineCustomTablesAudit::CustomEntityPatch)
       end
       
       Rails.logger.info "Custom Tables Audit: ✓ Successfully patched CustomEntity"
