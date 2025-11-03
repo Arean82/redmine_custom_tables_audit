@@ -11,21 +11,22 @@ Redmine::Plugin.register :redmine_custom_tables_audit do
     'enable_created_at' => '1'
   },
   partial: 'audit_settings/index'
-  
-  # Ensure this plugin loads AFTER custom_tables plugin
-  requires_redmine_plugin :custom_tables, version_or_higher: '0.0.1'
 end
 
-# Safe loading - only patch if custom_tables is available
+# Safe loading with proper error handling
 Rails.configuration.to_prepare do
   begin
-    if defined?(CustomTables::Record)
-      require_dependency 'redmine_custom_tables_audit/record_patch'
-      CustomTables::Record.include(RedmineCustomTablesAudit::RecordPatch)
+    # Check if CustomTables::Record class exists
+    if Object.const_defined?('CustomTables::Record')
+      require_dependency File.expand_path('../lib/redmine_custom_tables_audit/record_patch', __FILE__)
+      CustomTables::Record.include(RedmineCustomTablesAudit::RecordPatch) unless CustomTables::Record.include?(RedmineCustomTablesAudit::RecordPatch)
+      Rails.logger.info "Custom Tables Audit: Successfully patched CustomTables::Record"
     else
-      Rails.logger.info "Custom Tables plugin not found - Custom Tables Audit plugin disabled"
+      Rails.logger.warn "Custom Tables Audit: CustomTables::Record not found - plugin disabled"
     end
+  rescue LoadError => e
+    Rails.logger.error "Custom Tables Audit: LoadError - #{e.message}"
   rescue => e
-    Rails.logger.error "Error loading Custom Tables Audit: #{e.message}"
+    Rails.logger.error "Custom Tables Audit: Error - #{e.message}"
   end
 end
