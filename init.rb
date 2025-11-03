@@ -16,14 +16,18 @@ end
 # Simple direct approach
 Rails.configuration.to_prepare do
   begin
-    # Load our simple audit class
+    # Load our classes
     require_dependency File.expand_path('../lib/redmine_custom_tables_audit/simple_audit', __FILE__)
+    require_dependency File.expand_path('../lib/redmine_custom_tables_audit/column_manager', __FILE__)
     require_dependency File.expand_path('../lib/redmine_custom_tables_audit/model_callbacks', __FILE__)
     
     # Try to patch CustomEntity model
     if Object.const_defined?('CustomEntity')
       CustomEntity.include(RedmineCustomTablesAudit::ModelCallbacks)
       Rails.logger.info "Custom Tables Audit: ✓ Successfully added callbacks to CustomEntity"
+      
+      # Ensure columns exist
+      RedmineCustomTablesAudit::ColumnManager.add_columns_to_existing_tables
     else
       Rails.logger.warn "Custom Tables Audit: CustomEntity not found"
     end
