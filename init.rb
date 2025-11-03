@@ -10,19 +10,32 @@ Redmine::Plugin.register :redmine_custom_tables_audit do
     'enable_created_by' => '1',
     'enable_created_at' => '1'
   },
-  partial: 'audit_settings/index'  # This should point to your view file
+  partial: 'audit_settings/index'
 end
 
 # Safe loading with proper error handling
 Rails.configuration.to_prepare do
   begin
-    # Check if CustomTables::Record class exists
-    if Object.const_defined?('CustomTables::Record')
+    # Try different possible class names used by custom_tables plugin
+    target_class = nil
+    
+    if Object.const_defined?('CustomEntity')
+      target_class = CustomEntity
+      Rails.logger.info "Custom Tables Audit: Found CustomEntity class"
+    elsif Object.const_defined?('CustomTables::Record')
+      target_class = CustomTables::Record
+      Rails.logger.info "Custom Tables Audit: Found CustomTables::Record class"
+    elsif Object.const_defined?('CustomTableRecord')
+      target_class = CustomTableRecord
+      Rails.logger.info "Custom Tables Audit: Found CustomTableRecord class"
+    end
+    
+    if target_class
       require_dependency File.expand_path('../lib/redmine_custom_tables_audit/record_patch', __FILE__)
-      CustomTables::Record.include(RedmineCustomTablesAudit::RecordPatch) unless CustomTables::Record.include?(RedmineCustomTablesAudit::RecordPatch)
-      Rails.logger.info "Custom Tables Audit: Successfully patched CustomTables::Record"
+      target_class.include(RedmineCustomTablesAudit::RecordPatch) unless target_class.include?(RedmineCustomTablesAudit::RecordPatch)
+      Rails.logger.info "Custom Tables Audit: Successfully patched #{target_class.name}"
     else
-      Rails.logger.warn "Custom Tables Audit: CustomTables::Record not found - plugin disabled"
+      Rails.logger.warn "Custom Tables Audit: No custom table model found - plugin disabled"
     end
   rescue LoadError => e
     Rails.logger.error "Custom Tables Audit: LoadError - #{e.message}"

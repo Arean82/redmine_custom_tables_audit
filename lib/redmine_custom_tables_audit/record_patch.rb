@@ -24,9 +24,8 @@ module RedmineCustomTablesAudit
 
     def log_custom_table_changes
       return unless audit_enabled?
-      return unless respond_to?(:issue_id) && issue_id.present?
       
-      issue = Issue.find_by(id: issue_id)
+      issue = find_associated_issue
       return unless issue
 
       if previous_changes['id'] # New record
@@ -38,12 +37,28 @@ module RedmineCustomTablesAudit
 
     def log_custom_table_deletion
       return unless audit_enabled?
-      return unless respond_to?(:issue_id) && issue_id.present?
 
-      issue = Issue.find_by(id: issue_id)
+      issue = find_associated_issue
       return unless issue
 
       add_audit_journal(issue, "🗑️ Deleted custom table record: #{record_identifier}")
+    end
+
+    def find_associated_issue
+      # Try multiple association patterns used by custom_tables plugin
+      if respond_to?(:issue_id) && issue_id.present?
+        Issue.find_by(id: issue_id)
+      elsif respond_to?(:issue) && issue.present?
+        issue
+      elsif respond_to?(:container_id) && container_id.present?
+        Issue.find_by(id: container_id)
+      elsif respond_to?(:custom_table) && custom_table.present?
+        # Try to find through custom table associations
+        custom_table.issues.first if custom_table.respond_to?(:issues)
+      else
+        Rails.logger.warn "Custom Tables Audit: Could not find associated issue for record #{id}"
+        nil
+      end
     end
 
     def log_record_creation(issue)
@@ -78,8 +93,9 @@ module RedmineCustomTablesAudit
       begin
         issue.init_journal(User.current, note)
         issue.save!
+        Rails.logger.info "Custom Tables Audit: Added journal to issue #{issue.id}: #{note}"
       rescue => e
-        Rails.logger.error "Failed to create audit journal: #{e.message}"
+        Rails.logger.error "Custom Tables Audit: Failed to create journal - #{e.message}"
       end
     end
 

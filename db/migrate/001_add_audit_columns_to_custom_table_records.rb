@@ -1,12 +1,20 @@
 class AddAuditColumnsToCustomTableRecords < ActiveRecord::Migration[6.1]
   def change
-    # Check if the custom tables plugin is installed
-    unless defined?(CustomTables::Record)
-      puts "Custom Tables plugin not found - skipping migration"
+    # Try different possible table names
+    table_names = [
+      :custom_entities,           # Most common
+      :custom_tables_records,     # Alternative
+      :custom_table_records       # Another alternative
+    ]
+    
+    table_name = table_names.find { |name| table_exists?(name) }
+    
+    unless table_name
+      puts "Custom Tables records table not found - skipping migration"
       return
     end
-    
-    table_name = CustomTables::Record.table_name
+
+    puts "Adding audit columns to #{table_name}"
 
     unless column_exists?(table_name, :created_by)
       add_column table_name, :created_by, :integer
