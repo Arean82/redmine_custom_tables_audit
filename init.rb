@@ -13,6 +13,21 @@ Redmine::Plugin.register :redmine_custom_tables_audit do
   partial: 'audit_settings/index'
 end
 
+# Patch the CustomEntitiesController
+Rails.configuration.to_prepare do
+  begin
+    if Object.const_defined?('CustomEntitiesController')
+      require_dependency File.expand_path('../lib/redmine_custom_tables_audit/custom_entities_controller_patch', __FILE__)
+      CustomEntitiesController.include(RedmineCustomTablesAudit::CustomEntitiesControllerPatch)
+      Rails.logger.info "Custom Tables Audit: ✓ Successfully patched CustomEntitiesController"
+    else
+      Rails.logger.warn "Custom Tables Audit: CustomEntitiesController not found"
+    end
+  rescue => e
+    Rails.logger.error "Custom Tables Audit: Error patching controller - #{e.message}"
+  end
+end
+
 ## Safe loading with proper error handling
 #Rails.configuration.to_prepare do
 #  begin
