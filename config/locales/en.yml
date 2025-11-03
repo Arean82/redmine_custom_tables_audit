@@ -1,0 +1,9 @@
+en:
+  custom_tables_audit:
+    log_prefix: "Custom Table Change:"
+    settings_updated: "Custom Tables Audit settings saved successfully!"
+
+  audit_settings:
+    title: "Custom Tables Audit Configuration"
+
+  notice_successful_update: "Settings were successfully updated."

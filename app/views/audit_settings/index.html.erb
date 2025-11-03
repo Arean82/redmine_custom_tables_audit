@@ -1,0 +1,18 @@
+<h2>Custom Tables Audit Configuration</h2>
+
+<%= form_tag({ action: 'update' }, method: :post) do %>
+  <div class="box tabular settings">
+    <p>
+      <label for="enable_audit_logging">Enable Audit Logging:</label>
+      <%= check_box_tag 'settings[enable_audit_logging]', '1',
+          @settings['enable_audit_logging'] == '1' %>
+    </p>
+
+    <p>
+      <label>Future Options (Coming Soon):</label>
+      <em>Here you’ll be able to configure which custom tables and fields to audit.</em>
+    </p>
+  </div>
+
+  <p><%= submit_tag l(:button_save) %></p>
+<% end %>
